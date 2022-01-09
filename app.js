@@ -3,13 +3,25 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-const basicAuth = require("express-basic-auth");
+var livereload = require("livereload");
+var connectLiveReload = require("connect-livereload");
+
+//Enable live reload
+const liveReloadServer = livereload.createServer();
+liveReloadServer.server.once("connection", () => {
+  setTimeout(() => {
+    liveReloadServer.refresh("/");
+  }, 100);
+});
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 var logsRouter = require("./routes/logs");
 
 var app = express();
+
+// enable live reload
+app.use(connectLiveReload());
 
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
@@ -20,24 +32,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-
-
-
-//unauthorized response
-const getUnauthorizedResponse = (req) => {
-  return req.auth
-    ? "Credentials " + req.auth.user + ":" + req.auth.password + " rejected"
-    : "No credentials provided ";
-};
-
-//basic auth
-app.use(
-  basicAuth({
-    users: { "kesara": "12345" },
-    unauthorizedResponse: getUnauthorizedResponse,
-  })
-);
-
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
